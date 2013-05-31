@@ -18,11 +18,16 @@ using std::vector;
 class TableProcess : public Process<TableProcess>
 {
 public:
-  TableProcess()
+//   TableProcess()
+//   {
+
+//     this->numberOfPhilosophers = numberOfPhilosophers;
+//   }
+  
+  void setNumber(int i)
   {
-    int numberOfPhilosophers = 5;
-    this->philosophersLeft = numberOfPhilosophers;
-    this->numberOfPhilosophers = numberOfPhilosophers;
+    numberOfPhilosophers = i;
+    philosophersLeft = i;
   }
 
   Future<bool> askForFork(int i)
@@ -49,7 +54,6 @@ public:
 
   void checkIfDone()
   {
-    std::cout << philosophersLeft << std::endl;
     philosophersLeft--;
     if (philosophersLeft ==  0) {
       std::cout << "All Done" << std::endl;
@@ -65,7 +69,6 @@ public:
     for (int i = 0; i < numberOfPhilosophers; i++){
       forks.push_back(true);
     }
-    srand(time(0));
   }
 
 private:
@@ -77,7 +80,7 @@ private:
 
 class Table {
 public:
-  Table () { spawn(process); }
+  Table (int i) { spawn(process); process.setNumber(i); }
   ~Table () { terminate(process); wait(process); }
 
   Future<Nothing> empty() { return dispatch(process, &TableProcess::empty); }
@@ -139,11 +142,11 @@ protected:
     table->askForFork(philosopherNumber)
       .then(defer(self(), [this] (bool available) {
         if (available) {
-	  std::cout << philosopherNumber << "picked up left fork" << std::endl;
+	  std::cout << philosopherNumber << " picked up left fork" << std::endl;
 	  table->askForFork(philosopherNumber + 1)
 	    .then(defer(self(), [this] (bool available) -> Future<Nothing> {
 	      if (available) {
-		std::cout << philosopherNumber << "picked up right fork" << std::endl;
+		std::cout << philosopherNumber << " picked up right fork" << std::endl;
 	        eat();
 		return replaceBoth().then([this] (Nothing) { return perform(); });
 	      } else {                
@@ -168,15 +171,21 @@ private:
 
 int main(int argc, char** argv)
 {
-  int numberOfPhilosophers = 5;
-//   std::cout << "How many philosophers?" << std::endl;
-//   std::cin >> numberOfPhilosophers;
+  srand(time(0));
+  int numberOfPhilosophers;
+  std::cout << "How many philosophers?" << std::endl;
+  std::cin >> numberOfPhilosophers;
+
+  if (numberOfPhilosophers == 1) {
+    std::cout << "You need at least 2 philosophers to eat" << std::endl;
+    return 0;
+  }
 
   int servings;
   std::cout << "How many times should each philosopher eat?" << std::endl;
   std::cin >> servings;
 
-  Table table;
+  Table table(numberOfPhilosophers);
 
   for (int i = 0; i < numberOfPhilosophers; i++) {
     PhilosopherProcess* philosopher = new PhilosopherProcess(&table, i, servings);
