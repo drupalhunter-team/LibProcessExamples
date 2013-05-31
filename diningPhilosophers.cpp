@@ -119,6 +119,7 @@ protected:
 
   virtual void initialize()
   {
+    think();
     perform();
   }
 
